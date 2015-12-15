@@ -56,5 +56,31 @@ TrelloAPI.prototype.getAllCards= function(){
 	});
 }
 
+TrelloAPI.prototype.dropTrellos = function(db){ 
+	return new Promise(function(resolve, reject){
+		db.collection('trellos').drop(function(err, response){
+			if(!err || (err && err.message === "ns not found")){
+				resolve(response);
+			} else {
+				reject(err);
+			}
+		})
+	})
+}
+
+TrelloAPI.prototype.addCardsInDb = function(db, cards){
+	return new Promise(function(resolve, reject){
+		db.collection('trellos').insert(cards, function(err, result){
+			if(err){
+				reject(err);
+			} else {
+				resolve(result);
+			}
+		});
+	})	
+};
+
+
+
 
 module.exports = TrelloAPI;

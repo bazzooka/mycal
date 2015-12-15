@@ -30,8 +30,10 @@
 		    Trello.members.get("me", function(member){
 		    	$.ajax({
 		    		method: "GET",
-		    		url: "/authTrello",
-		    		data: "token="+window.localStorage.trello_token,
+		    		// url: "/authTrello",
+		    		// data: "token="+window.localStorage.trello_token,
+		    		url: "/organize",
+		    		data: "userId=Joe",
 		    		success: function(cards){
 		    			console.log(cards);
 		    		}, error: function(){
