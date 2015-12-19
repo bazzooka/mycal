@@ -1,4 +1,16 @@
+/* eslint no-console: 0 */
+var path = require('path');
 var express = require('express');
+var webpack = require('webpack');
+var webpackMiddleware = require('webpack-dev-middleware');
+var webpackHotMiddleware = require('webpack-hot-middleware');
+
+//var config = require('./webpack.config.js')(process.env.NODE_ENV !== 'production');
+var config = require('./webpack.config.js')
+
+var isDeveloping = process.env.NODE_ENV !== 'production';
+var port = isDeveloping ? 3000 : process.env.PORT;
+
 var app = express();
 var mongodb = require('mongodb');
 var Trello = require("node-trello");
@@ -9,10 +21,8 @@ var Organizer = require("./server/organizer");
 
 var db;
 
-app.use(express.static('public'));
-
-app.get('/', function(req, res) {
-  res.send('Hello World!');
+app.get('/tests', function(req, res) {
+  res.send("Test");
 });
 
 // Get all the cards
@@ -53,16 +63,49 @@ app.get('/organize', function(req, res) {
   res.send("OK");
 });
 
+app.use(express.static('public'));
+if (isDeveloping) {
+  var compiler = webpack(config);
+  var middleware = webpackMiddleware(compiler, {
+    noInfo: true, 
+    publicPath: config.output.publicPath
+  });
+  app.use(middleware);
+
+  app.use(webpackHotMiddleware(compiler, {
+    log: console.log, path: '/__webpack_hmr', heartbeat: 10 * 1000
+  }));
+
+  app.get('*', function response(req, res) {
+    console.log(req.originalUrl);
+    res.write(middleware.fileSystem.readFileSync(path.join(__dirname, 'dist/index.html')));
+    res.end();
+  });
+} else {
+  var compiler = webpack(config);
+  console.log(compiler);
+
+  //app.use(express.static(__dirname + '/dist'));
+  app.get('*', function response(req, res) {
+    res.sendFile(path.join(__dirname, 'dist/index.html'));
+  });
+}
+
+
+
 // Initialize connection once
 MongoClient.connect("mongodb://localhost:27017/mycal", function(err, database) {
   if (err) throw err;
 
-  	db = database;
+  db = database;
 
-  	var server = app.listen(3000, function() {
-    	var host = server.address().address;
-    	var port = server.address().port;
+  var server = app.listen(port, function() {
+     var host = server.address().address;
+     var port = server.address().port;
 
-    	console.log('Example app listening at http://%s:%s', host, port);
-  	});
+     console.info('==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.', port, port);
+   });
 });
+
+/*===================*/
+
