@@ -1,3 +1,5 @@
+import request from 'superagent';
+
 var Trello = {
   opts: {
     "version":1,
@@ -119,6 +121,78 @@ var Trello = {
         })();
       }
     }.bind(this));
+  },
+
+  isAuthorized: function(){
+    return this.readStorage("token") != null;
+  },
+
+  getBoards: function(){
+    return new Promise((resolve, reject) => {
+      if(this.isAuthorized){
+        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/members/me/boards")
+          .query({"key": this.opts.key})
+          .query({"token": this.readStorage("token")})
+          .accept('application/json')
+          .end(function(err, results){
+            if(err){
+              reject(err);
+            } else {
+              resolve(results);
+            }
+          });
+      } else {
+        reject("Not authenticated");
+      }
+    });
+  },
+
+  getCardsFromBoard: function(board){
+    return new Promise((resolve, reject) => {
+      if(this.isAuthorized){
+        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/boards/"+board.id+"/cards/")
+          .query({"key": this.opts.key})
+          .query({"token": this.readStorage("token")})
+          .accept('application/json')
+          .end(function(err, results){
+            if(err){
+              reject(err);
+            } else {
+              resolve(results);
+            }
+          });
+      } else {
+        reject("Not authenticated");
+      }
+    });
+  },
+
+  getAllCards: function(){
+    return new Promise((resolve, reject) => {
+      let _boards = []
+      if(this.isAuthorized){
+        this.getBoards().then((boards) => {
+          let boardId = boards.body.id;
+          return boards.body.map(this.getCardsFromBoard.bind(this))
+            .reduce((sequence, cardPromise) => {
+              return sequence.then(() => {
+                return cardPromise;
+              }).then((cards) => {
+                if(cards.body && cards.body.length > 0){
+                  _boards[cards.body[0].idBoard] = cards.body;
+                }
+              })
+            }, Promise.resolve());
+        }).then(function(){
+          resolve(_boards);
+        }).catch((err) => {
+          if("invalid token" === err.response.text){
+            this.deauthorize();
+            reject("Invalid Trello token.")
+          }
+        });
+      }
+    });
   }
 }
 
