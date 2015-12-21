@@ -10,9 +10,9 @@ const Index = React.createClass({
 
   onLogin () {
     console.log("Try to Login");
-    Trello.authorize().then(function(){
-      console.log("Already connected");
-    });
+      Trello.getAllCards().then(function(boards){
+        console.log(boards);
+      })
   },
 
 	render() {
