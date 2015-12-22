@@ -4,8 +4,16 @@ import Trello from './api/trello';
 
 const Index = React.createClass({
 
+  getInitialState(){
+    return {trello: false};
+  },
+
 	componentDidMount(){
-	
+    Trello.getUserInfos().then((results) => {
+      this.setState({trello: true});
+    }).catch((err) => {
+      this.setState({trello: false});
+    })
 	},
 
   onLogin () {
@@ -16,14 +24,13 @@ const Index = React.createClass({
   },
 
 	render() {
-	    return (
-	    	<div>
-	    		<div onClick={this.onLogin}>
-	    			LOGIN
-	    		</div>
-			</div>
-	    )
-  	},
+    let trelloLogin = <div>{this.state.login ? "Logout": "Login" }</div>;
+    return (
+      <div className="api-container">
+        {trelloLogin}
+      </div>
+    )
+  },
 });
 
 export default Index;
