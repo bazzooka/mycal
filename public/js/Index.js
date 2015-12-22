@@ -16,15 +16,22 @@ const Index = React.createClass({
     })
 	},
 
-  onLogin () {
-    console.log("Try to Login");
-      Trello.getAllCards().then(function(boards){
-        console.log(boards);
+  onLoginOut (){
+    if(this.state.trello){
+      Trello.deauthorize();
+      this.setState({trello: false});
+    } else {
+      Trello.authorize().then(()=>{
+        this.setState({trello: true});
+      }).catch((err)=>{
+        Trello.deauthorize();
+        console.log("An error happened. Try again later...");
       })
+    }
   },
 
 	render() {
-    let trelloLogin = <div>{this.state.login ? "Logout": "Login" }</div>;
+    let trelloLogin = <div onClick={this.onLoginOut}>{this.state.trello ? "Logout": "Login" }</div>;
     return (
       <div className="api-container">
         {trelloLogin}

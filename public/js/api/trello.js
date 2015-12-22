@@ -66,9 +66,13 @@ var Trello = {
           _ref3.close();
         }
 
-        console.log(event);
-        this.persistToken(event.data);
-        resolve("OK");
+        if(event.data){
+          this.persistToken(event.data);
+          resolve("OK");
+        } else {
+          reject("KO");
+        }
+        
       }.bind(this));
 
       Object.assign(opts, {
@@ -188,11 +192,34 @@ var Trello = {
         }).catch((err) => {
           if("invalid token" === err.response.text){
             this.deauthorize();
-            reject("Invalid Trello token.")
+            reject("Invalid Trello token");
           }
         });
       }
     });
+  },
+
+  getUserInfos: function(){
+    return new Promise( (resolve, reject) => {
+      if(this.isAuthorized){
+        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/member/me")
+          .query({"key": this.opts.key})
+          .query({"token": this.readStorage("token")})
+          .accept('application/json')
+          .end((err, results) => {
+            if(err){
+              if("invalid token" === err.response.text){
+                this.deauthorize();
+                reject("Invalid Trello token");
+              }
+            } else {
+              resolve(results);
+            }
+          });
+      } else {
+        reject("Invalid Trello token");
+      }
+    })
   }
 }
 
