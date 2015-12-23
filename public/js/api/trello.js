@@ -1,4 +1,5 @@
 import request from 'superagent';
+import Error from '../Error';
 
 var Trello = {
   opts: {
@@ -43,7 +44,7 @@ var Trello = {
     return results.join(",");
   },
 
-  deauthorize: function(){
+  deauthorize: function() {
     this.writeStorage("token", null);
   },
 
@@ -66,13 +67,13 @@ var Trello = {
           _ref3.close();
         }
 
-        if(event.data){
+        if (event.data) {
           this.persistToken(event.data);
           resolve("OK");
         } else {
           reject("KO");
         }
-        
+
       }.bind(this));
 
       Object.assign(opts, {
@@ -127,90 +128,125 @@ var Trello = {
     }.bind(this));
   },
 
-  isAuthorized: function(){
+  isAuthorized: function() {
     return this.readStorage("token") != null;
   },
 
-  getBoards: function(){
+  getBoards: function() {
     return new Promise((resolve, reject) => {
-      if(this.isAuthorized){
+      if (this.isAuthorized) {
         request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/members/me/boards")
           .query({"key": this.opts.key})
           .query({"token": this.readStorage("token")})
           .accept('application/json')
-          .end(function(err, results){
-            if(err){
+          .end(function(err, results) {
+            if (err) {
               reject(err);
             } else {
               resolve(results);
             }
           });
       } else {
-        reject("Not authenticated");
+        this.deauthorize();
+        reject(Error.INVALID_TOKEN);
       }
     });
   },
 
-  getCardsFromBoard: function(board){
+  getListsFromBoard: function(board) {
     return new Promise((resolve, reject) => {
-      if(this.isAuthorized){
-        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/boards/"+board.id+"/cards/")
+      if (this.isAuthorized) {
+        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/boards/" + board.id + "/lists/")
           .query({"key": this.opts.key})
           .query({"token": this.readStorage("token")})
           .accept('application/json')
-          .end(function(err, results){
-            if(err){
+          .end(function(err, results) {
+            if (err) {
               reject(err);
             } else {
               resolve(results);
             }
           });
       } else {
-        reject("Not authenticated");
+        this.deauthorize();
+        reject(Error.INVALID_TOKEN);
+      }
+    })
+  },
+
+  getCardsFromBoard: function(board) {
+    return new Promise((resolve, reject) => {
+      if (this.isAuthorized) {
+        request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/boards/" + board.id + "/cards/")
+          .query({"key": this.opts.key})
+          .query({"token": this.readStorage("token")})
+          .accept('application/json')
+          .end(function(err, results) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(results);
+            }
+          });
+      } else {
+        this.deauthorize();
+        reject(Error.INVALID_TOKEN);
       }
     });
   },
 
-  getAllCards: function(){
+  getAllCards: function() {
     return new Promise((resolve, reject) => {
       let _boards = []
-      if(this.isAuthorized){
+      if (this.isAuthorized) {
         this.getBoards().then((boards) => {
-          let boardId = boards.body.id;
-          return boards.body.map(this.getCardsFromBoard.bind(this))
-            .reduce((sequence, cardPromise) => {
+          return Promise.all([
+            boards.body.map(this.getCardsFromBoard.bind(this)).reduce((sequence, cardPromise) => {
               return sequence.then(() => {
                 return cardPromise;
               }).then((cards) => {
-                if(cards.body && cards.body.length > 0){
-                  _boards[cards.body[0].idBoard] = cards.body;
+                if (cards.body && cards.body.length > 0) {
+                  _boards[cards.body[0].idBoard] = _boards[cards.body[0].idBoard] || {};
+                  _boards[cards.body[0].idBoard].cards = cards.body;
                 }
               })
-            }, Promise.resolve());
-        }).then(function(){
+            }, Promise.resolve()),
+            boards.body.map(this.getListsFromBoard.bind(this)).reduce((sequence, listPromise) => {
+              return sequence.then(() => {
+                return listPromise;
+              }).then((lists) => {
+                if (lists.body && lists.body.length > 0) {
+                  _boards[lists.body[0].idBoard] = _boards[lists.body[0].idBoard] || {};
+                  _boards[lists.body[0].idBoard].lists = lists.body;
+                }
+              })
+            }, Promise.resolve()),
+        ])
+
+        }).then(function() {
           resolve(_boards);
         }).catch((err) => {
-          if("invalid token" === err.response.text){
+          if ("invalid token" === err.response.text) {
             this.deauthorize();
-            reject("Invalid Trello token");
+            reject(Error.INVALID_TOKEN);
           }
         });
       }
     });
   },
 
-  getUserInfos: function(){
-    return new Promise( (resolve, reject) => {
-      if(this.isAuthorized){
+  getUserInfos: function() {
+    return new Promise((resolve, reject) => {
+      if (this.isAuthorized) {
         request.get(this.opts.apiEndpoint + "/" + this.opts.version + "/member/me")
           .query({"key": this.opts.key})
           .query({"token": this.readStorage("token")})
           .accept('application/json')
           .end((err, results) => {
-            if(err){
-              if("invalid token" === err.response.text){
+            if (err) {
+              if ("invalid token" === err.response.text) {
                 this.deauthorize();
-                reject("Invalid Trello token");
+                reject(Error.INVALID_TOKEN);
               }
             } else {
               resolve(results);
@@ -220,7 +256,7 @@ var Trello = {
         reject("Invalid Trello token");
       }
     })
-  }
+  },
 }
 
 export default Trello;
