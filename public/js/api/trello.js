@@ -30,6 +30,10 @@ var Trello = {
     }
   },
 
+  getToken: function(){
+    return this.readStorage("token");
+  },
+
   getScope: function(scope) {
     var ref1, results, k, v, ref1 = scope,
     results = [];
@@ -48,18 +52,21 @@ var Trello = {
     this.writeStorage("token", null);
   },
 
-  authorize:  function() {
-    return new Promise(function(resolve, reject) {
+  
+  authorize: function() {
+    return new Promise(function(resolve, reject){
       let regexToken = /[&#]?token=([0-9a-f]{64})/,
       ref1 = null,
         origin = (ref1 = /^[a-z]+:\/\/[^\/]*/.exec(location)) != null ? ref1[0] : void 0,
         token = null, opts = {}, scope = "",
         authorizeURL = "";
 
-      window.addEventListener("message", function(event) {
-        var _ref3;
+      let onMessage = (event) => {
+        let  _ref3;
 
-        if (event.origin !== this.opts.authEndpoint) {
+        window.removeEventListener("message", Trello.onMessage);
+
+        if (event.origin !== Trello.opts.authEndpoint) {
           return true;
         }
 
@@ -68,13 +75,14 @@ var Trello = {
         }
 
         if (event.data) {
-          this.persistToken(event.data);
+          Trello.persistToken(event.data);
           resolve("OK");
         } else {
           reject("KO");
         }
+      }
 
-      }.bind(this));
+      window.addEventListener("message", onMessage); 
 
       Object.assign(opts, {
         type: "popup",
