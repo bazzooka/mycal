@@ -1,7 +1,12 @@
 import React from 'react';
 import Error from './Error';
 import Trello from './api/trello';
-import TrelloBoard from './TrelloBoard';
+import MyDb from './api/mydb';
+
+import List from 'material-ui/lib/lists/list';
+import ListDivider from 'material-ui/lib/lists/list-divider';
+import ListItem from 'material-ui/lib/lists/list-item';
+import Toggle from 'material-ui/lib/toggle';
 
 const TrelloView = React.createClass({
   getInitialState() {
@@ -9,10 +14,16 @@ const TrelloView = React.createClass({
   },
 
   componentDidMount: function() {
-    var me = this;
+    let me = this,
+    _boards = [];
+
 
     Trello.getAllCards().then((boards)=> {
-      this.setState({boards: boards})
+      _boards = boards;
+    }).then(()=> {
+      MyDb.downloadTrellosInDb(Trello.getToken(), "Joe");
+    }).then(()=> {
+      this.setState({boards: _boards});
     }).catch((err)=> {
       if (err === Error.Trello.INVALID_TOKEN) {
         Trello.deauthorize();
@@ -27,12 +38,21 @@ const TrelloView = React.createClass({
     }
 
     let boardsElts = Object.keys(this.state.boards).map((key)=>{
-    	return <TrelloBoard key={key} board={this.state.boards[key]}/>
+      console.log(this.state.boards[key])
+    	return <ListItem
+                primaryText={this.state.boards[key].board.name}
+                rightToggle= {<Toggle
+                                  name="toggleBoard"
+                                  value="toggleValue1"/>}
+                key={key} />
+                
     });
 
     return (
 	    <div className="trello-boards">
-	    	{boardsElts}
+	    	<List subheader="">
+          {boardsElts}
+        </List>
 	    </div>
     )
   },
