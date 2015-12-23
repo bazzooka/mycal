@@ -1,7 +1,9 @@
 /* eslint no-console: 0 */
 var path = require('path');
 var express = require('express');
+var bodyParser = require('body-parser');
 var webpack = require('webpack');
+var httpProxy = require('http-proxy');
 var webpackMiddleware = require('webpack-dev-middleware');
 var webpackHotMiddleware = require('webpack-hot-middleware');
 
@@ -13,13 +15,29 @@ var port = isDeveloping ? 3005 : process.env.PORT;
 
 var app = express();
 var mongodb = require('mongodb');
-var Trello = require("node-trello");
 var MongoClient = require('mongodb').MongoClient;
 
 var TrelloAPI = require("./server/trello");
 var Organizer = require("./server/organizer");
 
+var MyTrelloAPI = null;
 var db;
+
+if (isDeveloping) {
+  var proxy = httpProxy.createProxyServer({
+    changeOrigin: true,
+  });
+
+  app.all('/api/*', function (req, res) {
+    proxy.web(req, res, {
+      target: 'http://localhost:3006'
+    });
+  });
+}
+
+app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/tests', function(req, res) {
   res.send("Test");
@@ -63,17 +81,24 @@ app.get('/organize', function(req, res) {
   res.send("OK");
 });
 
-app.use(express.static('public'));
+app.post('/api/authTrello', function(req, res) {
+  var boards = req.body.boards;
+
+  var boardsObj = JSON.parse(boards);
+
+  res.send('OK');
+})
+
 if (isDeveloping) {
   var compiler = webpack(config);
   var middleware = webpackMiddleware(compiler, {
-    noInfo: true, 
-    publicPath: config.output.publicPath
+    noInfo: true,
+    publicPath: config.output.publicPath,
   });
   app.use(middleware);
 
   app.use(webpackHotMiddleware(compiler, {
-    log: console.log, path: '/__webpack_hmr', heartbeat: 10 * 1000
+    log: console.log, path: '/__webpack_hmr', heartbeat: 10 * 1000,
   }));
 
   app.get('*', function response(req, res) {
