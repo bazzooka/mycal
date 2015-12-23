@@ -221,8 +221,11 @@ var Trello = {
                 }
               })
             }, Promise.resolve()),
-        ])
-
+            boards.body.map((elt, index) => {
+              _boards[elt.id] = _boards[elt.id] || {};
+              _boards[elt.id].board = elt;
+            })
+          ])
         }).then(function() {
           resolve(_boards);
         }).catch((err) => {
