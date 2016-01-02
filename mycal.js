@@ -7,8 +7,8 @@ var httpProxy = require('http-proxy');
 var webpackMiddleware = require('webpack-dev-middleware');
 var webpackHotMiddleware = require('webpack-hot-middleware');
 
-//var config = require('./webpack.config.js')(process.env.NODE_ENV !== 'production');
-var config = require('./webpack.config.js')
+// var config = require('./webpack.config.js')(process.env.NODE_ENV !== 'production');
+var config = require('./webpack.config.js');
 
 var isDeveloping = process.env.NODE_ENV !== 'production';
 var port = isDeveloping ? 3005 : process.env.PORT;
@@ -34,6 +34,7 @@ if (isDeveloping) {
     });
   });
 }
+
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
@@ -133,4 +134,3 @@ MongoClient.connect("mongodb://localhost:27017/mycal", function(err, database) {
 });
 
 /*===================*/
-

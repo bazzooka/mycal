@@ -56,7 +56,7 @@ TrelloAPI.prototype.getAllCards= function(){
 	});
 }
 
-TrelloAPI.prototype.dropTrellos = function(db){ 
+TrelloAPI.prototype.dropTrellos = function(db){
 	return new Promise(function(resolve, reject){
 		db.collection('trellos').drop(function(err, response){
 			if(!err || (err && err.message === "ns not found")){
@@ -77,7 +77,7 @@ TrelloAPI.prototype.addCardsInDb = function(db, cards){
 				resolve(result);
 			}
 		});
-	})	
+	})
 };
 
 TrelloAPI.prototype.addBoardsInDb = function(params){
@@ -86,12 +86,9 @@ TrelloAPI.prototype.addBoardsInDb = function(params){
 		if(!boards.hasOwnProperty(boardId)){
 			continue;
 		}
-		db.collection('trello_boards').
+		// db.collection('trello_boards').
 	}
-}
-
-Trello
-
+};
 
 
 

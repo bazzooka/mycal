@@ -12,7 +12,7 @@ module.exports = {
     // 'webpack-hot-middleware/client?reload=true',
     //'webpack-hot-middleware/client?http://localhost:3000',
     'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
-    path.resolve(__dirname, 'public/js/main.js')],
+    path.resolve(__dirname, 'public/js/starter.js')],
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'main.js',

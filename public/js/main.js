@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Router, Route, IndexRoute, Link } from 'react-router'
-import createBrowserHistory from 'history/lib/createBrowserHistory'
+import { Router, Route, IndexRoute, Link } from 'react-router';
+import createBrowserHistory from 'history/lib/createBrowserHistory';
 import App from './App.js';
 import Index from './Index.js';
 import Calendar from './Calendar.js';
