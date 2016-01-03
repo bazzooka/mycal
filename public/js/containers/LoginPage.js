@@ -1,11 +1,12 @@
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
-import { loadUser } from '../actions';
+import { loadUser, loadBitbucketUser } from '../actions';
 // import zip from 'lodash/array/zip';
 
 function loadData(props) {
   const { login } = props;
-  props.loadUser(login);
+  // props.loadUser(login);
+  props.loadBitbucketUser(login);
 }
 
 const LoginPage = React.createClass({
@@ -97,11 +98,13 @@ function mapStateToProps(state) {
   const { login } = state.router.params;
   const {
       entities: { users, repos },
+      entitiesBitbucket: { userss, bitbucketUser },
   } = state;
 
   return {
     login,
     user: users[login],
+    userBit: bitbucketUser[login],
   };
 }
 
@@ -109,6 +112,7 @@ export default connect(
   mapStateToProps,
   {
     loadUser,
+    loadBitbucketUser,
   }
 )(LoginPage);
 
